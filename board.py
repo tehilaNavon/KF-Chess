@@ -23,8 +23,10 @@ class Board:
 
     def move_piece(self, r1, c1, r2, c2):
         piece = self.get_cell(r1, c1)
+        captured = self.get_cell(r2, c2)
         self.set_cell(r2, c2, piece)
         self.set_cell(r1, c1, EMPTY_CELL)
+        return captured
 
     def inside_board(self, row, col):
         return 0 <= row < self.rows and 0 <= col < self.cols
