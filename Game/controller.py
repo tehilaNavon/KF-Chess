@@ -40,3 +40,4 @@ class Controller:
         result = self.game_engine.request_move(old_position, position)
         self.selected = None
         return result
+

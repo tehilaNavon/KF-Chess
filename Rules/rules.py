@@ -20,7 +20,14 @@ class RuleEngine:
         piece_type = piece_code[1]
 
         if destination_code != EMPTY_CELL and destination_code[0] == color:
-            return False, "friendly_piece"
+            vacated = False
+            if arrival_time is not None and pending_motions:
+                vacated = any(
+                    motion.source == destination and motion.arrival_time <= arrival_time
+                    for motion in pending_motions
+                )
+            if not vacated:
+                return False, "friendly_piece"
 
         dr = abs(destination.row - source.row)
         dc = abs(destination.col - source.col)

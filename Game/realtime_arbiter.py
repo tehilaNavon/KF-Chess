@@ -113,15 +113,10 @@ class RealTimeArbiter:
         still_pending = []
         executed = []
 
-        # Process motion arrivals
         for motion in self.active_motions:
             if current_time >= motion.arrival_time:
-                # If destination has an airborne piece at this time, the airborne piece
-                # captures the arriving motion: remove arriving piece from source and
-                # do not move it to destination.
                 airborne, jump = self.is_cell_airborne_at(motion.destination, current_time)
                 if airborne and jump and jump['piece_color'] != motion.piece_color:
-                    # arriving piece is removed (captured by airborne piece)
                     captured = motion.piece_code
                     board.set_cell(motion.source.row, motion.source.col, EMPTY_CELL)
                     executed.append((motion, captured))
@@ -144,5 +139,6 @@ class RealTimeArbiter:
             if current_time < jump['end_time']:
                 still_jumps.append(jump)
         self.active_jumps = still_jumps
+
 
         return executed

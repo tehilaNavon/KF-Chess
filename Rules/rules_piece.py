@@ -25,7 +25,10 @@ def knight_rule(board, r1, c1, r2, c2, color, dr, dc):#פרש
 
 def pawn_rule(board, r1, c1, r2, c2, color, dr, dc):#חייל
     direction = -1 if color == "w" else 1
-    start_row = board.rows - 1 if color == "w" else 0
+    if color == "w":
+        start_row = board.rows - 2 if board.rows > 2 else board.rows - 1
+    else:
+        start_row = 1 if board.rows > 2 else 0
     final_row = 0 if color == "w" else board.rows - 1
 
     if c1 == c2:
