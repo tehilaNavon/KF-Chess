@@ -11,5 +11,6 @@ MOVE_TIME = 1000
 COMMAND_PRINT_BOARD = "print board"
 COMMAND_WAIT = "wait"
 COMMAND_CLICK = "click"
+COMMAND_JUMP = "jump"
 BOARD_HEADER = "Board:"
 COMMANDS_HEADER = "Commands:"

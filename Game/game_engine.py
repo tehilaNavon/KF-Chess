@@ -59,9 +59,38 @@ class GameEngine:
         self.realtime_arbiter.start_motion(source, destination, self.current_time, piece_code)
         return MoveResult(True, "ok")
 
+    def request_jump(self, source):
+        """Request a jump (airborne) for the piece at `source`.
+
+        Returns MoveResult like request_move.
+        """
+        if self.is_game_over:
+            return MoveResult(False, "game_over")
+
+        piece_code = self.board.get_cell(source.row, source.col)
+        if piece_code == EMPTY_CELL:
+            return MoveResult(False, "empty_source")
+
+        # captured pieces or moving pieces cannot jump
+        if self.realtime_arbiter.is_source_in_motion(source):
+            return MoveResult(False, "motion_in_progress")
+
+        can_jump, reason = self.realtime_arbiter.can_schedule_jump(self.board, source, self.current_time, piece_code)
+        if not can_jump:
+            return MoveResult(False, reason)
+
+        self.realtime_arbiter.start_jump(source, self.current_time, piece_code)
+        return MoveResult(True, "ok")
+
     def advance_time(self, ms):
         self.current_time += ms
-        captures = self.realtime_arbiter.advance_time(self.board, self.current_time)
-        if any(captured in ("wK", "bK") for captured in captures):
-            self.is_game_over = True
+        executed = self.realtime_arbiter.advance_time(self.board, self.current_time)
+        for motion, captured in executed:
+            if motion.piece_code[1] == "P" and self.board.is_promotion_square(
+                motion.destination.row, motion.piece_code[0]
+            ):
+                promotion_token = f"{motion.piece_code[0]}Q"
+                self.board.set_cell(motion.destination.row, motion.destination.col, promotion_token)
+            if captured in ("wK", "bK"):
+                self.is_game_over = True
         return self.current_time

@@ -1,4 +1,4 @@
-from constants import COMMAND_PRINT_BOARD, COMMAND_WAIT, COMMAND_CLICK
+from constants import COMMAND_PRINT_BOARD, COMMAND_WAIT, COMMAND_CLICK, COMMAND_JUMP
 from Game.controller import Controller
 from Game.game_engine import GameEngine
 
@@ -20,15 +20,29 @@ class Game:
             return
 
         verb = tokens[0]
-        if verb == COMMAND_WAIT and len(tokens) == 2:
-            self.wait(int(tokens[1]))
-            return
+        handlers = {
+            COMMAND_WAIT: (self.wait, 1),
+            COMMAND_CLICK: (self.click, 2),
+            COMMAND_JUMP: (self.jump, 2),
+        }
 
-        if verb == COMMAND_CLICK and len(tokens) == 3:
-            self.click(int(tokens[1]), int(tokens[2]))
+        if verb in handlers:
+            handler, expected_args = handlers[verb]
+            if len(tokens) - 1 == expected_args:
+                args = [int(token) for token in tokens[1:]]
+                handler(*args)
+            return
 
     def click(self, x, y):
         result = self.controller.handle_click(x, y)
+        if result is not None:
+            pass
+
+    def jump(self, x, y):
+        position = self.controller.mapper.to_position(x, y)
+        if not self.board.inside_board(position.row, position.col):
+            return None
+        result = self.game_engine.request_jump(position)
         if result is not None:
             pass
 

@@ -20,8 +20,7 @@ class RuleEngine:
         piece_type = piece_code[1]
 
         if destination_code != EMPTY_CELL and destination_code[0] == color:
-            if arrival_time is None or not self._will_destination_be_vacated(destination, arrival_time, pending_motions):
-                return False, "friendly_piece"
+            return False, "friendly_piece"
 
         dr = abs(destination.row - source.row)
         dc = abs(destination.col - source.col)
@@ -36,12 +35,3 @@ class RuleEngine:
 
         return True, "ok"
 
-    def _will_destination_be_vacated(self, destination, arrival_time, pending_motions):
-        if pending_motions is None:
-            return False
-
-        for motion in pending_motions:
-            if motion.source == destination and motion.arrival_time <= arrival_time:
-                return True
-
-        return False

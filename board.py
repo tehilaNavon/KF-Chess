@@ -28,5 +28,12 @@ class Board:
         self.set_cell(r1, c1, EMPTY_CELL)
         return captured
 
+    def is_promotion_square(self, row, color):
+        if color == "w":
+            return row == 0
+        if color == "b":
+            return row == self.rows - 1
+        return False
+
     def inside_board(self, row, col):
         return 0 <= row < self.rows and 0 <= col < self.cols
