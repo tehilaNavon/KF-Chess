@@ -34,22 +34,15 @@ class Game:
             return
 
     def click(self, x, y):
-        result = self.controller.handle_click(x, y)
-        if result is not None:
-            pass
+        return self.controller.handle_click(x, y)
 
     def jump(self, x, y):
-        position = self.controller.mapper.to_position(x, y)
-        if not self.board.inside_board(position.row, position.col):
-            return None
-        result = self.game_engine.request_jump(position)
-        if result is not None:
-            pass
+        return self.controller.handle_jump(x, y)
 
     def wait(self, ms):
         self.game_engine.advance_time(ms)
 
     def print_board(self):
-        self.game_engine.realtime_arbiter.advance_time(self.board, self.game_engine.current_time)
+        self.game_engine.sync_board_state()
         self.board.print_board()
 

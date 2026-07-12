@@ -17,9 +17,15 @@ class Controller:
         self.mapper = BoardMapper(cell_size)
         self.selected = None
 
-    def handle_click(self, x, y):
+    def _resolve_position(self, x, y):
         position = self.mapper.to_position(x, y)
         if not self.board.inside_board(position.row, position.col):
+            return None
+        return position
+
+    def handle_click(self, x, y):
+        position = self._resolve_position(x, y)
+        if position is None:
             self.selected = None
             return None
 
@@ -40,4 +46,10 @@ class Controller:
         result = self.game_engine.request_move(old_position, position)
         self.selected = None
         return result
+
+    def handle_jump(self, x, y):
+        position = self._resolve_position(x, y)
+        if position is None:
+            return None
+        return self.game_engine.request_jump(position)
 

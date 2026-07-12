@@ -1,5 +1,4 @@
 from constants import EMPTY_CELL
-from models import Position
 from Game.realtime_arbiter import RealTimeArbiter
 from Rules.rules import RuleEngine
 
@@ -18,28 +17,21 @@ class GameEngine:
         self.rule_engine = RuleEngine()
         self.realtime_arbiter = RealTimeArbiter(move_time=move_time or 1000)
 
-    def request_move(self, source, destination):
+    def validate_move(self, source, destination):
         if self.is_game_over:
             return MoveResult(False, "game_over")
-
-        if source == destination:
-            return MoveResult(False, "same_square")
-
-        piece_code = self.board.get_cell(source.row, source.col)
-        if piece_code == EMPTY_CELL:
-            return MoveResult(False, "empty_source")
 
         if self.realtime_arbiter.is_source_in_motion(source):
             return MoveResult(False, "motion_in_progress")
 
+        piece_code = self.board.get_cell(source.row, source.col)
         arrival_time = self.realtime_arbiter.compute_arrival_time(source, destination, self.current_time)
-        color = piece_code[0]
 
         is_valid, reason = self.rule_engine.validate_move(
             self.board,
             source,
             destination,
-            color,
+            piece_code[0],
             arrival_time=arrival_time,
             pending_motions=self.realtime_arbiter.active_motions,
         )
@@ -56,14 +48,19 @@ class GameEngine:
         if not can_schedule:
             return MoveResult(False, reason)
 
-        self.realtime_arbiter.start_motion(source, destination, self.current_time, piece_code)
         return MoveResult(True, "ok")
 
-    def request_jump(self, source):
-        """Request a jump (airborne) for the piece at `source`.
+    def execute_move(self, source, destination):
+        piece_code = self.board.get_cell(source.row, source.col)
+        self.realtime_arbiter.start_motion(source, destination, self.current_time, piece_code)
 
-        Returns MoveResult like request_move.
-        """
+    def request_move(self, source, destination):
+        result = self.validate_move(source, destination)
+        if result.is_valid:
+            self.execute_move(source, destination)
+        return result
+
+    def validate_jump(self, source):
         if self.is_game_over:
             return MoveResult(False, "game_over")
 
@@ -71,16 +68,29 @@ class GameEngine:
         if piece_code == EMPTY_CELL:
             return MoveResult(False, "empty_source")
 
-        # captured pieces or moving pieces cannot jump
         if self.realtime_arbiter.is_source_in_motion(source):
             return MoveResult(False, "motion_in_progress")
 
-        can_jump, reason = self.realtime_arbiter.can_schedule_jump(self.board, source, self.current_time, piece_code)
+        can_jump, reason = self.realtime_arbiter.can_schedule_jump(
+            self.board, source, self.current_time, piece_code
+        )
         if not can_jump:
             return MoveResult(False, reason)
 
-        self.realtime_arbiter.start_jump(source, self.current_time, piece_code)
         return MoveResult(True, "ok")
+
+    def execute_jump(self, source):
+        piece_code = self.board.get_cell(source.row, source.col)
+        self.realtime_arbiter.start_jump(source, self.current_time, piece_code)
+
+    def request_jump(self, source):
+        result = self.validate_jump(source)
+        if result.is_valid:
+            self.execute_jump(source)
+        return result
+
+    def sync_board_state(self):
+        self.realtime_arbiter.advance_time(self.board, self.current_time)
 
     def advance_time(self, ms):
         self.current_time += ms
