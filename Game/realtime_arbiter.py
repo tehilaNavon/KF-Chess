@@ -1,10 +1,4 @@
-from constants import MOVE_TIME, EMPTY_CELL
-from models import Position
-
-
-# Jump duration is fixed at 1000 ms per spec
-JUMP_DURATION = 1000
-
+from constants import MOVE_TIME, EMPTY_CELL, JUMP_DURATION
 
 class Motion:
     def __init__(self, source, destination, arrival_time, piece_code):
@@ -108,36 +102,43 @@ class RealTimeArbiter:
         self.active_jumps.append(jump)
         return jump
 
-    def advance_time(self, board, current_time):
+    def partition_motions(self, current_time):
+        arrived = []
         still_pending = []
-        executed = []
-
         for motion in self.active_motions:
             if current_time >= motion.arrival_time:
-                airborne, jump = self.is_cell_airborne_at(motion.destination, current_time)
-                if airborne and jump and jump['piece_color'] != motion.piece_color:
-                    captured = motion.piece_code
-                    board.set_cell(motion.source.row, motion.source.col, EMPTY_CELL)
-                    executed.append((motion, captured))
-                else:
-                    captured = board.move_piece(
-                        motion.source.row,
-                        motion.source.col,
-                        motion.destination.row,
-                        motion.destination.col,
-                    )
-                    executed.append((motion, captured))
+                arrived.append(motion)
             else:
                 still_pending.append(motion)
+        return arrived, still_pending
 
+    def resolve_arrival(self, board, motion, current_time):
+        airborne, jump = self.is_cell_airborne_at(motion.destination, current_time)
+        if airborne and jump and jump['piece_color'] != motion.piece_color:
+            captured = motion.piece_code
+            board.set_cell(motion.source.row, motion.source.col, EMPTY_CELL)
+        else:
+            captured = board.move_piece(
+                motion.source.row,
+                motion.source.col,
+                motion.destination.row,
+                motion.destination.col,
+            )
+        return captured
+
+    def apply_arrival(self, board, motion, current_time):
+        captured = self.resolve_arrival(board, motion, current_time)
+        return motion, captured
+
+    def expire_jumps(self, current_time):
+        self.active_jumps = [
+            jump for jump in self.active_jumps
+            if current_time < jump['end_time']
+        ]
+
+    def advance_time(self, board, current_time):
+        arrived, still_pending = self.partition_motions(current_time)
+        executed = [self.apply_arrival(board, motion, current_time) for motion in arrived]
         self.active_motions = still_pending
-
-        # Remove expired jumps
-        still_jumps = []
-        for jump in self.active_jumps:
-            if current_time < jump['end_time']:
-                still_jumps.append(jump)
-        self.active_jumps = still_jumps
-
-
+        self.expire_jumps(current_time)
         return executed

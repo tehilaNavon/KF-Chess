@@ -25,15 +25,12 @@ class GameEngine:
             return MoveResult(False, "motion_in_progress")
 
         piece_code = self.board.get_cell(source.row, source.col)
-        arrival_time = self.realtime_arbiter.compute_arrival_time(source, destination, self.current_time)
 
         is_valid, reason = self.rule_engine.validate_move(
             self.board,
             source,
             destination,
             piece_code[0],
-            arrival_time=arrival_time,
-            pending_motions=self.realtime_arbiter.active_motions,
         )
         if not is_valid:
             return MoveResult(False, reason)
@@ -92,15 +89,27 @@ class GameEngine:
     def sync_board_state(self):
         self.realtime_arbiter.advance_time(self.board, self.current_time)
 
-    def advance_time(self, ms):
+    def tick(self, ms):
         self.current_time += ms
-        executed = self.realtime_arbiter.advance_time(self.board, self.current_time)
+
+    def apply_promotion(self, motion):
+        if motion.piece_code[1] == "P" and self.board.is_promotion_square(
+            motion.destination.row, motion.piece_code[0]
+        ):
+            promotion_token = f"{motion.piece_code[0]}Q"
+            self.board.set_cell(motion.destination.row, motion.destination.col, promotion_token)
+
+    def check_game_over(self, captured):
+        if captured in ("wK", "bK"):
+            self.is_game_over = True
+
+    def process_executed_motions(self, executed):
         for motion, captured in executed:
-            if motion.piece_code[1] == "P" and self.board.is_promotion_square(
-                motion.destination.row, motion.piece_code[0]
-            ):
-                promotion_token = f"{motion.piece_code[0]}Q"
-                self.board.set_cell(motion.destination.row, motion.destination.col, promotion_token)
-            if captured in ("wK", "bK"):
-                self.is_game_over = True
+            self.apply_promotion(motion)
+            self.check_game_over(captured)
+
+    def advance_time(self, ms):
+        self.tick(ms)
+        executed = self.realtime_arbiter.advance_time(self.board, self.current_time)
+        self.process_executed_motions(executed)
         return self.current_time

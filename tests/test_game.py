@@ -81,6 +81,35 @@ class TestGame(unittest.TestCase):
         self.assertEqual(board.get_cell(0, 1), "wP")
         self.assertEqual(game.game_engine.current_time, 0)
 
+    def test_apply_command_prints_illegal_move_error(self):
+        """בודק שמהלך לא חוקי מדפיס הודעת שגיאה."""
+        board = Board([
+            [EMPTY_CELL, EMPTY_CELL],
+            [EMPTY_CELL, "wP"],
+        ])
+        game = Game(board)
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            game.apply_command("click 100 100")
+            game.apply_command("click 0 100")
+
+        self.assertEqual(output.getvalue(), "ERROR illegal_move\n")
+
+    def test_apply_command_prints_invalid_argument_error(self):
+        """בודק שארגומנט לא מספרי מדפיס הודעת שגיאה."""
+        board = Board([
+            [EMPTY_CELL, "wP"],
+            [EMPTY_CELL, EMPTY_CELL],
+        ])
+        game = Game(board)
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            game.apply_command("click abc def")
+
+        self.assertEqual(output.getvalue(), "ERROR INVALID_ARGUMENT\n")
+
 
 if __name__ == "__main__":
     unittest.main()
