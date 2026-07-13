@@ -22,6 +22,14 @@ class TestParserValidator(unittest.TestCase):
         board = Board([["xK", "."]])
         self.assertEqual(validate(board), "ERROR UNKNOWN_TOKEN")
 
+    def test_validate_returns_none_for_empty_board(self):
+        board = Board([])
+        self.assertIsNone(validate(board))
+
+    def test_validate_rejects_row_width_mismatch(self):
+        board = Board([["wK", "."], ["bP"]])
+        self.assertEqual(validate(board), "ERROR ROW_WIDTH_MISMATCH")
+
 
 if __name__ == "__main__":
     unittest.main()

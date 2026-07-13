@@ -76,8 +76,30 @@ class TestGameEngineMoveRequest(unittest.TestCase):
         self.assertTrue(result.is_valid)
         self.assertEqual(result.reason, "ok")
 
-    def test_request_move_rejects_enemy_collision(self):
-        """בודק שפרמשן שמגיע לאותו יעד כמו תנועה של אויב נדחה."""
+    def test_enemy_later_arrival_captures_at_same_square(self):
+        """בודק שאויב שמגיע מאוחר יותר לאותה משבצת אוכל את מי שהגיע קודם."""
+        board = Board([
+            ["bR", EMPTY_CELL, EMPTY_CELL, EMPTY_CELL],
+            [EMPTY_CELL, EMPTY_CELL, EMPTY_CELL, EMPTY_CELL],
+            [EMPTY_CELL, EMPTY_CELL, EMPTY_CELL, EMPTY_CELL],
+            ["wR", EMPTY_CELL, EMPTY_CELL, EMPTY_CELL],
+        ])
+        game_engine = GameEngine(board, move_time=1)
+        game_engine.request_move(Position(0, 0), Position(1, 0))
+
+        result = game_engine.request_move(Position(3, 0), Position(1, 0))
+        self.assertTrue(result.is_valid)
+
+        game_engine.advance_time(1)
+        self.assertEqual(board.get_cell(1, 0), "bR")
+
+        game_engine.advance_time(2)
+        self.assertEqual(board.get_cell(1, 0), "wR")
+        self.assertEqual(board.get_cell(0, 0), EMPTY_CELL)
+        self.assertEqual(board.get_cell(3, 0), EMPTY_CELL)
+
+    def test_enemy_same_arrival_later_scheduled_captures(self):
+        """בודק שבאותו זמן הגעה, האויב שתוזמן שני אוכל את הראשון."""
         board = Board([
             ["bP", EMPTY_CELL],
             [EMPTY_CELL, EMPTY_CELL],
@@ -87,8 +109,12 @@ class TestGameEngineMoveRequest(unittest.TestCase):
         game_engine.request_move(Position(0, 0), Position(1, 0))
 
         result = game_engine.request_move(Position(2, 0), Position(1, 0))
-        self.assertFalse(result.is_valid)
-        self.assertEqual(result.reason, "enemy_collision")
+        self.assertTrue(result.is_valid)
+
+        game_engine.advance_time(1)
+        self.assertEqual(board.get_cell(1, 0), "wP")
+        self.assertEqual(board.get_cell(0, 0), EMPTY_CELL)
+        self.assertEqual(board.get_cell(2, 0), EMPTY_CELL)
 
     def test_request_move_accepts_valid_move(self):
         """בודק שמסע תקין מבוצע ונכנס לרשימת התנועות הפעילה."""

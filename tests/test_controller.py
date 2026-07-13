@@ -41,3 +41,18 @@ class TestController(unittest.TestCase):
         result = self.controller.handle_click(100, 0)
         self.assertTrue(result.is_valid)
         self.assertIsNone(self.controller.selected)
+
+    def test_controller_handle_jump_requests_jump(self):
+        """בודק ש-handle_jump שולח בקשת jump למנוע המשחק."""
+        result = self.controller.handle_jump(100, 100)
+        self.assertTrue(result.is_valid)
+        self.assertEqual(result.reason, "ok")
+
+    def test_controller_handle_jump_returns_none_out_of_bounds(self):
+        """בודק ש-handle_jump מחוץ ללוח מחזיר None."""
+        result = self.controller.handle_jump(1000, 1000)
+        self.assertIsNone(result)
+
+
+if __name__ == "__main__":
+    unittest.main()

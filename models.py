@@ -13,12 +13,12 @@ class Position:
         return f"Position(row={self.row}, col={self.col})"
 
 
-class Piece:
-    def __init__(self, token):
-        self.token = token
-        self.color = token[0] if token != EMPTY_CELL else None
-        self.kind = token[1] if token != EMPTY_CELL else None
+# class Piece:
+#     def __init__(self, token):
+#         self.token = token
+#         self.color = token[0] if token != EMPTY_CELL else None
+#         self.kind = token[1] if token != EMPTY_CELL else None
 
-    @classmethod
-    def from_token(cls, token):
-        return cls(token) if token != EMPTY_CELL else None
+#     @classmethod
+#     def from_token(cls, token):
+#         return cls(token) if token != EMPTY_CELL else None

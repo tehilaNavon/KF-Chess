@@ -65,16 +65,15 @@ class RealTimeArbiter:
             return False, "friendly_piece"
 
         for motion in self.active_motions:
-            if motion.destination == destination:
+            if motion.destination == destination and motion.piece_color == piece_code[0]:
                 if motion.arrival_time == arrival_time:
-                    if motion.piece_color != piece_code[0]:
-                        return False, "enemy_collision"
                     return False, "movement_conflict"
                 if motion.arrival_time < arrival_time:
                     return False, "movement_conflict"
 
             if motion.source == destination and motion.destination == source and motion.arrival_time == arrival_time:
-                return False, "enemy_collision"
+                if motion.piece_color != piece_code[0]:
+                    return False, "enemy_collision"
 
         return True, "ok"
 

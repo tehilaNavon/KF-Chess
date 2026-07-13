@@ -5,12 +5,17 @@ from parser import parse_input
 from validator import validate
 from Game.game import Game
 
-board, commands = parse_input()
-error = validate(board)
 
-if error:
-    print(error)
-else:
-    game = Game(board)
-    for command in commands:
-        game.apply_command(command)
+def run():
+    board, commands = parse_input()
+    error = validate(board)
+    if error:
+        print(error)
+    else:
+        game = Game(board)
+        for command in commands:
+            game.apply_command(command)
+
+
+if __name__ == "__main__":
+    run()
