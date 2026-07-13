@@ -1,10 +1,16 @@
-from constants import EMPTY_CELL
+from constants import (
+    EMPTY_CELL,
+    ERROR_EMPTY_SOURCE,
+    ERROR_GAME_OVER,
+    ERROR_MOTION_IN_PROGRESS,
+    ERROR_OK,
+)
 from Game.realtime_arbiter import RealTimeArbiter
 from Rules.rules import RuleEngine
 
 
 class MoveResult:
-    def __init__(self, is_valid, reason="ok"):
+    def __init__(self, is_valid, reason=ERROR_OK):
         self.is_valid = is_valid
         self.reason = reason
 
@@ -19,10 +25,10 @@ class GameEngine:
 
     def validate_move(self, source, destination):
         if self.is_game_over:
-            return MoveResult(False, "game_over")
+            return MoveResult(False, ERROR_GAME_OVER)
 
         if self.realtime_arbiter.is_source_in_motion(source):
-            return MoveResult(False, "motion_in_progress")
+            return MoveResult(False, ERROR_MOTION_IN_PROGRESS)
 
         piece_code = self.board.get_cell(source.row, source.col)
 
@@ -45,7 +51,7 @@ class GameEngine:
         if not can_schedule:
             return MoveResult(False, reason)
 
-        return MoveResult(True, "ok")
+        return MoveResult(True, ERROR_OK)
 
     def execute_move(self, source, destination):
         piece_code = self.board.get_cell(source.row, source.col)
@@ -59,14 +65,14 @@ class GameEngine:
 
     def validate_jump(self, source):
         if self.is_game_over:
-            return MoveResult(False, "game_over")
+            return MoveResult(False, ERROR_GAME_OVER)
 
         piece_code = self.board.get_cell(source.row, source.col)
         if piece_code == EMPTY_CELL:
-            return MoveResult(False, "empty_source")
+            return MoveResult(False, ERROR_EMPTY_SOURCE)
 
         if self.realtime_arbiter.is_source_in_motion(source):
-            return MoveResult(False, "motion_in_progress")
+            return MoveResult(False, ERROR_MOTION_IN_PROGRESS)
 
         can_jump, reason = self.realtime_arbiter.can_schedule_jump(
             self.board, source, self.current_time, piece_code
@@ -74,7 +80,7 @@ class GameEngine:
         if not can_jump:
             return MoveResult(False, reason)
 
-        return MoveResult(True, "ok")
+        return MoveResult(True, ERROR_OK)
 
     def execute_jump(self, source):
         piece_code = self.board.get_cell(source.row, source.col)

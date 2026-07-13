@@ -1,4 +1,11 @@
-from constants import COMMAND_PRINT_BOARD, COMMAND_WAIT, COMMAND_CLICK, COMMAND_JUMP
+from constants import (
+    COMMAND_CLICK,
+    COMMAND_JUMP,
+    COMMAND_PRINT_BOARD,
+    COMMAND_WAIT,
+    ERROR_INVALID_ARGUMENT,
+    format_error,
+)
 from Game.controller import Controller
 from Game.game_engine import GameEngine, MoveResult
 
@@ -12,7 +19,7 @@ class Game:
 
     def _report_move_result(self, result):
         if isinstance(result, MoveResult) and not result.is_valid:
-            print(f"ERROR {result.reason}")
+            print(format_error(result.reason))
 
     def apply_command(self, command):
         if command == COMMAND_PRINT_BOARD:
@@ -36,7 +43,7 @@ class Game:
                 try:
                     args = [int(token) for token in tokens[1:]]
                 except ValueError:
-                    print("ERROR INVALID_ARGUMENT")
+                    print(format_error(ERROR_INVALID_ARGUMENT))
                     return
                 result = handler(*args)
                 self._report_move_result(result)

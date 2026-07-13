@@ -1,4 +1,14 @@
-from constants import MOVE_TIME, EMPTY_CELL, JUMP_DURATION
+from constants import (
+    EMPTY_CELL,
+    ERROR_EMPTY_SOURCE,
+    ERROR_ENEMY_COLLISION,
+    ERROR_FRIENDLY_PIECE,
+    ERROR_MOTION_IN_PROGRESS,
+    ERROR_MOVEMENT_CONFLICT,
+    ERROR_OK,
+    JUMP_DURATION,
+    MOVE_TIME,
+)
 
 class Motion:
     def __init__(self, source, destination, arrival_time, piece_code):
@@ -45,43 +55,43 @@ class RealTimeArbiter:
         arrival_time = self.compute_arrival_time(source, destination, current_time)
 
         if self.is_source_in_motion(source):
-            return False, "motion_in_progress"
+            return False, ERROR_MOTION_IN_PROGRESS
 
         destination_cell = board.get_cell(destination.row, destination.col)
         # If destination currently has a friendly piece, disallow unless it will vacate.
         if destination_cell != EMPTY_CELL and destination_cell[0] == piece_code[0]:
             if not self.will_destination_be_vacated(destination, arrival_time):
-                return False, "friendly_piece"
+                return False, ERROR_FRIENDLY_PIECE
 
         # If destination is occupied by a friendly airborne piece during arrival, block.
         airborne, jump = self.is_cell_airborne_at(destination, arrival_time)
         if airborne and jump and jump['piece_code'][0] == piece_code[0]:
-            return False, "friendly_piece"
+            return False, ERROR_FRIENDLY_PIECE
 
         for motion in self.active_motions:
             if motion.destination == destination and motion.piece_color == piece_code[0]:
                 if motion.arrival_time == arrival_time:
-                    return False, "movement_conflict"
+                    return False, ERROR_MOVEMENT_CONFLICT
                 if motion.arrival_time < arrival_time:
-                    return False, "movement_conflict"
+                    return False, ERROR_MOVEMENT_CONFLICT
 
             if motion.source == destination and motion.destination == source and motion.arrival_time == arrival_time:
                 if motion.piece_color != piece_code[0]:
-                    return False, "enemy_collision"
+                    return False, ERROR_ENEMY_COLLISION
 
-        return True, "ok"
+        return True, ERROR_OK
 
     def can_schedule_jump(self, board, source, current_time, piece_code):
         # Can't jump if source is moving or empty
         if self.is_source_in_motion(source):
-            return False, "motion_in_progress"
+            return False, ERROR_MOTION_IN_PROGRESS
         if piece_code == EMPTY_CELL:
-            return False, "empty_source"
+            return False, ERROR_EMPTY_SOURCE
         # Can't jump if source already has a jump active
         for jump in self.active_jumps:
             if jump['cell'] == source:
-                return False, "motion_in_progress"
-        return True, "ok"
+                return False, ERROR_MOTION_IN_PROGRESS
+        return True, ERROR_OK
 
     def start_motion(self, source, destination, current_time, piece_code):
         arrival_time = self.compute_arrival_time(source, destination, current_time)
