@@ -1,20 +1,12 @@
 # Repository URL: not configured in this workspace
 # If a git remote origin exists, replace this comment with the repository URL.
 
-from parser import parse_input
-from validator import validate
-from Game.game import Game
+from Display.app.interactive_game import run_interactive_game
+from Display.starting_board import create_standard_starting_board
 
 
 def run():
-    board, commands = parse_input()
-    error = validate(board)
-    if error:
-        print(error)
-    else:
-        game = Game(board)
-        for command in commands:
-            game.apply_command(command)
+    run_interactive_game(board=create_standard_starting_board())
 
 
 if __name__ == "__main__":
