@@ -14,7 +14,7 @@ class Game:
 
     def __init__(self, board):
         self.board = board
-        self.game_engine = GameEngine(board, move_time=1000)
+        self.game_engine = GameEngine(board)
         self.controller = Controller(board, self.game_engine)
 
     def _report_move_result(self, result):

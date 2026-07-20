@@ -1,4 +1,5 @@
 from constants import (
+    ASSETS_PIECES_ROOT,
     EMPTY_CELL,
     ERROR_EMPTY_SOURCE,
     ERROR_GAME_OVER,
@@ -16,18 +17,24 @@ class MoveResult:
 
 
 class GameEngine:
-    def __init__(self, board, move_time=0):
+    def __init__(self, board, move_time=None, assets_root=None):
         self.board = board
         self.is_game_over = False
         self.current_time = 0
         self.rule_engine = RuleEngine()
-        self.realtime_arbiter = RealTimeArbiter(move_time=move_time or 1000)
+        self.realtime_arbiter = self._create_realtime_arbiter(move_time, assets_root)
+
+    def _create_realtime_arbiter(self, move_time, assets_root):
+        if move_time is not None:
+            return RealTimeArbiter(move_time=move_time)
+        pieces_root = assets_root if assets_root is not None else ASSETS_PIECES_ROOT
+        return RealTimeArbiter(assets_root=pieces_root)
 
     def validate_move(self, source, destination):
         if self.is_game_over:
             return MoveResult(False, ERROR_GAME_OVER)
 
-        if self.realtime_arbiter.is_source_in_motion(source):
+        if self.realtime_arbiter.is_source_busy(source, self.current_time):
             return MoveResult(False, ERROR_MOTION_IN_PROGRESS)
 
         piece_code = self.board.get_cell(source.row, source.col)
@@ -71,7 +78,7 @@ class GameEngine:
         if piece_code == EMPTY_CELL:
             return MoveResult(False, ERROR_EMPTY_SOURCE)
 
-        if self.realtime_arbiter.is_source_in_motion(source):
+        if self.realtime_arbiter.is_source_busy(source, self.current_time):
             return MoveResult(False, ERROR_MOTION_IN_PROGRESS)
 
         can_jump, reason = self.realtime_arbiter.can_schedule_jump(
