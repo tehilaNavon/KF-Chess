@@ -1,0 +1,1 @@
+"""KungFu Chess server package."""
